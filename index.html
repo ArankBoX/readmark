@@ -1,0 +1,1933 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>考研英语一 · 精读标注</title>
+<style>
+/* ============================================================
+   CSS Custom Properties
+   ============================================================ */
+:root {
+  --color-word: #ff6b6b;
+  --color-word-bg: rgba(255, 107, 107, 0.20);
+  --color-word-border: rgba(255, 107, 107, 0.55);
+  --color-phrase: #4ecdc4;
+  --color-phrase-bg: rgba(78, 205, 196, 0.20);
+  --color-phrase-border: rgba(78, 205, 196, 0.55);
+  --color-sentence: #ffb347;
+  --color-sentence-bg: rgba(255, 179, 71, 0.18);
+  --color-sentence-border: rgba(255, 179, 71, 0.50);
+  --color-selection: rgba(255, 217, 61, 0.35);
+  --color-selection-border: rgba(255, 200, 30, 0.6);
+
+  --color-bg: #fdf6ee;
+  --color-surface: #fffef9;
+  --color-text: #2c2416;
+  --color-text-secondary: #6b5e4a;
+  --color-border: #e0d6c2;
+  --color-toolbar-bg: #fffef9;
+  --color-statusbar-bg: #faf5eb;
+
+  --font-serif: 'Georgia', 'Noto Serif SC', 'STSong', 'SimSun', 'Songti SC', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-size: 17px;
+  --line-height: 1.85;
+  --toolbar-height: 48px;
+  --statusbar-height: 40px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* ============================================================
+   Reset & Base
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { height: 100%; -webkit-text-size-adjust: 100%; }
+body {
+  height: 100%;
+  font-family: var(--font-serif);
+  font-size: var(--font-size);
+  line-height: var(--line-height);
+  color: var(--color-text);
+  background: var(--color-bg);
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+/* ============================================================
+   Layout
+   ============================================================ */
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  background: var(--color-surface);
+  box-shadow: 0 0 30px rgba(0,0,0,0.06);
+}
+
+/* ============================================================
+   Toolbar
+   ============================================================ */
+#toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: var(--toolbar-height);
+  padding: 0 14px;
+  background: var(--color-toolbar-bg);
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+  z-index: 10;
+}
+#toolbar .brand {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text);
+  white-space: nowrap;
+  letter-spacing: -0.3px;
+}
+#article-select {
+  flex: 1;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  padding: 6px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  min-width: 0;
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b5e4a' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  padding-right: 28px;
+}
+#toolbar .btn {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  padding: 6px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+#toolbar .btn:active { background: #f0e8d8; }
+#toolbar .btn.primary {
+  background: #4a3f2f;
+  color: #fff;
+  border-color: #4a3f2f;
+}
+#toolbar .btn.primary:active { background: #5c4f3d; }
+
+/* ============================================================
+   Main Content Area
+   ============================================================ */
+#main {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding: 20px 16px 16px;
+}
+#article-header {
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--color-border);
+}
+#article-header .title {
+  font-family: var(--font-sans);
+  font-size: 19px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+#article-header .meta {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+/* ============================================================
+   Article Content (tokenized words)
+   ============================================================ */
+#article-content { position: relative; }
+#article-content p {
+  margin-bottom: 1em;
+  text-indent: 0;
+  word-break: break-word;
+}
+#article-content .word {
+  display: inline;
+  cursor: pointer;
+  border-radius: 3px;
+  padding: 1px 1px;
+  margin: 0 0.5px;
+  transition: background-color 0.12s, box-shadow 0.12s;
+  position: relative;
+}
+
+/* Selection highlight */
+#article-content .word.selected {
+  background-color: var(--color-selection);
+}
+#article-content .word.selection-start {
+  background-color: var(--color-selection);
+  box-shadow: inset 2px 0 0 var(--color-selection-border);
+  border-radius: 3px 0 0 3px;
+}
+#article-content .word.selection-end {
+  box-shadow: inset -2px 0 0 var(--color-selection-border);
+  border-radius: 0 3px 3px 0;
+}
+
+/* Annotation styles */
+#article-content .word.ann-word {
+  background-color: var(--color-word-bg);
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 2px,
+    rgba(255, 107, 107, 0.08) 2px,
+    rgba(255, 107, 107, 0.08) 4px
+  );
+  text-decoration: underline;
+  text-decoration-color: var(--color-word-border);
+  text-decoration-style: wavy;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1.5px;
+  border-radius: 3px;
+  padding: 1px 2px;
+}
+#article-content .word.ann-phrase {
+  background-color: var(--color-phrase-bg);
+  background-image: radial-gradient(
+    circle,
+    rgba(78, 205, 196, 0.15) 1px,
+    transparent 1px
+  );
+  background-size: 6px 6px;
+  text-decoration: underline;
+  text-decoration-color: var(--color-phrase-border);
+  text-decoration-style: dashed;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1.5px;
+  border-radius: 3px;
+  padding: 1px 2px;
+}
+#article-content .word.ann-sentence {
+  background-color: var(--color-sentence-bg);
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 2px,
+    rgba(255, 179, 71, 0.08) 2px,
+    rgba(255, 179, 71, 0.08) 4px
+  );
+}
+#article-content .word.ann-sentence.ann-sentence-first {
+  border-left: 3px solid var(--color-sentence-border);
+  padding-left: 2px;
+}
+#article-content .word.ann-sentence.ann-sentence-last {
+  border-right: 3px solid var(--color-sentence-border);
+  padding-right: 2px;
+}
+
+/* ============================================================
+   Status Bar
+   ============================================================ */
+#status-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: var(--statusbar-height);
+  padding: 0 14px;
+  padding-bottom: var(--safe-bottom);
+  background: var(--color-statusbar-bg);
+  border-top: 1px solid var(--color-border);
+  flex-shrink: 0;
+  z-index: 10;
+  font-family: var(--font-sans);
+  font-size: 13px;
+}
+#status-bar .stats {
+  display: flex;
+  gap: 14px;
+  flex: 1;
+}
+#status-bar .stat {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: background 0.12s;
+}
+#status-bar .stat:active { background: #ebe3d0; }
+#status-bar .stat .dot {
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+#status-bar .stat .dot.word { background: var(--color-word); }
+#status-bar .stat .dot.phrase { background: var(--color-phrase); }
+#status-bar .stat .dot.sentence { background: var(--color-sentence); }
+#status-bar .btn {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  padding: 4px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 5px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+#status-bar .btn:active { background: #ebe3d0; }
+#status-bar .btn:disabled { opacity: 0.4; pointer-events: none; }
+
+/* ============================================================
+   Bottom Sheet (Selection Panel & Annotation Panel)
+   ============================================================ */
+.overlay-bg {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.35);
+  z-index: 50;
+  display: none;
+  animation: fadeIn 0.18s ease;
+}
+.overlay-bg.show { display: block; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.bottom-sheet {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  background: var(--color-surface);
+  border-radius: 16px 16px 0 0;
+  z-index: 60;
+  padding: 16px 16px calc(16px + var(--safe-bottom));
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.12);
+  display: none;
+  animation: slideUp 0.22s ease;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+.bottom-sheet.show { display: block; }
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.bottom-sheet .sheet-handle {
+  width: 36px; height: 4px;
+  background: #ccc;
+  border-radius: 2px;
+  margin: 0 auto 14px;
+}
+.bottom-sheet .sheet-title {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.bottom-sheet .sheet-subtitle {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin-bottom: 14px;
+  word-break: break-all;
+}
+
+.bottom-sheet .type-buttons {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.bottom-sheet .type-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 8px;
+  border: 2px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface);
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+}
+.bottom-sheet .type-btn:active { transform: scale(0.97); }
+.bottom-sheet .type-btn.word { --accent: var(--color-word); }
+.bottom-sheet .type-btn.phrase { --accent: var(--color-phrase); }
+.bottom-sheet .type-btn.sentence { --accent: var(--color-sentence); }
+.bottom-sheet .type-btn .icon { font-size: 26px; }
+.bottom-sheet .type-btn:hover, .bottom-sheet .type-btn:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+.bottom-sheet .sheet-cancel {
+  display: block;
+  width: 100%;
+  padding: 11px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  border: none;
+  background: #f0ece3;
+  border-radius: 10px;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+}
+
+/* Annotation detail panel */
+.bottom-sheet .ann-detail-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+}
+.bottom-sheet .ann-detail-row .tag {
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+}
+.bottom-sheet .ann-detail-row .tag.word { background: var(--color-word); }
+.bottom-sheet .ann-detail-row .tag.phrase { background: var(--color-phrase); }
+.bottom-sheet .ann-detail-row .tag.sentence { background: var(--color-sentence); }
+
+.bottom-sheet .action-buttons {
+  display: flex;
+  gap: 8px;
+}
+.bottom-sheet .action-buttons button {
+  flex: 1;
+  padding: 10px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  cursor: pointer;
+}
+.bottom-sheet .action-buttons button.danger { color: #d32f2f; border-color: #d32f2f; }
+.bottom-sheet .action-buttons button:active { background: #f5f0e6; }
+
+/* Annotation list panel */
+#list-content { max-height: 50vh; overflow-y: auto; }
+#list-content .list-group { margin-bottom: 14px; }
+#list-content .list-group-header {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 6px 0 4px;
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 6px;
+}
+#list-content .list-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.12s;
+  font-family: var(--font-sans);
+  font-size: 13px;
+}
+#list-content .list-item:active { background: #f5f0e6; }
+#list-content .list-item .li-icon { font-size: 16px; flex-shrink: 0; }
+#list-content .list-item .li-text {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-serif);
+  font-size: 14px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#list-content .list-item .li-context {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  font-family: var(--font-sans);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#list-content .list-item .li-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+#list-content .list-item .li-delete {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  font-size: 12px;
+  border: 1px solid #d32f2f;
+  border-radius: 6px;
+  color: #d32f2f;
+  background: transparent;
+  cursor: pointer;
+  font-family: var(--font-sans);
+}
+#list-content .list-item .li-delete:active { background: #ffebee; }
+#list-content .list-empty {
+  text-align: center;
+  padding: 24px;
+  color: var(--color-text-secondary);
+  font-family: var(--font-sans);
+  font-size: 14px;
+}
+
+/* Blink highlight for locate */
+@keyframes blink-highlight {
+  0%, 100% { background-color: transparent; }
+  50% { background-color: rgba(255, 217, 61, 0.6); }
+}
+.word.blink-locate {
+  animation: blink-highlight 0.5s ease 3;
+  border-radius: 3px;
+}
+
+/* ============================================================
+   Export Modal
+   ============================================================ */
+.modal {
+  position: fixed; inset: 0;
+  z-index: 80;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modal.show { display: flex; }
+.modal .modal-bg {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.4);
+  animation: fadeIn 0.18s ease;
+}
+.modal .modal-content {
+  position: relative;
+  background: var(--color-surface);
+  border-radius: 14px;
+  padding: 22px;
+  width: 100%;
+  max-width: 360px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.18);
+  animation: slideUp 0.22s ease;
+}
+.modal .modal-title {
+  font-family: var(--font-sans);
+  font-size: 17px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+.modal .export-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: var(--font-sans);
+}
+.modal .export-option:active { background: #faf5eb; }
+.modal .export-option .eo-icon { font-size: 28px; }
+.modal .export-option .eo-info { flex: 1; }
+.modal .export-option .eo-name { font-weight: 600; font-size: 14px; }
+.modal .export-option .eo-desc { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; }
+.modal .modal-close {
+  display: block;
+  width: 100%;
+  padding: 11px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  border: none;
+  background: #f0ece3;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 4px;
+}
+
+/* Import file input (hidden) */
+#import-input { display: none; }
+
+/* ============================================================
+   Toast
+   ============================================================ */
+#toast {
+  position: fixed;
+  bottom: calc(var(--statusbar-height) + var(--safe-bottom) + 20px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #2c2416;
+  color: #fff;
+  padding: 10px 22px;
+  border-radius: 20px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  z-index: 100;
+  opacity: 0;
+  transition: opacity 0.25s;
+  pointer-events: none;
+  white-space: nowrap;
+}
+#toast.show { opacity: 1; }
+
+/* ============================================================
+   Desktop responsive
+   ============================================================ */
+@media (min-width: 768px) {
+  #app {
+    border-left: 1px solid var(--color-border);
+    border-right: 1px solid var(--color-border);
+  }
+  body {
+    padding: 0;
+    background: #f0ebe0;
+  }
+  #main {
+    padding: 28px 32px 20px;
+  }
+  #article-content .word:hover {
+    outline: 1.5px solid rgba(0,0,0,0.12);
+  }
+  .bottom-sheet {
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: 500px;
+    border-radius: 16px;
+    bottom: 16px;
+  }
+  #status-bar {
+    justify-content: center;
+  }
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- Toolbar -->
+  <div id="toolbar">
+    <span class="brand">📖 精读</span>
+    <select id="article-select"></select>
+    <button class="btn" id="btn-import" title="导入标注数据">导入</button>
+    <button class="btn primary" id="btn-export">导出</button>
+  </div>
+
+  <!-- Main reading area -->
+  <div id="main">
+    <div id="article-header">
+      <div class="title" id="article-title"></div>
+      <div class="meta" id="article-meta"></div>
+    </div>
+    <div id="article-content"></div>
+  </div>
+
+  <!-- Status bar -->
+  <div id="status-bar">
+    <div class="stats">
+      <span class="stat" data-type="word">
+        <span class="dot word"></span> 生词 <strong id="count-word">0</strong>
+      </span>
+      <span class="stat" data-type="phrase">
+        <span class="dot phrase"></span> 短语 <strong id="count-phrase">0</strong>
+      </span>
+      <span class="stat" data-type="sentence">
+        <span class="dot sentence"></span> 难句 <strong id="count-sentence">0</strong>
+      </span>
+    </div>
+    <button class="btn" id="btn-undo" disabled>↩ 撤销</button>
+    <button class="btn" id="btn-list">📋 列表</button>
+  </div>
+</div>
+
+<!-- Selection type panel -->
+<div class="overlay-bg" id="selection-overlay"></div>
+<div class="bottom-sheet" id="selection-panel">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title">标记这段文本</div>
+  <div class="sheet-subtitle" id="selection-text"></div>
+  <div class="type-buttons">
+    <button class="type-btn word" data-type="word">
+      <span class="icon">📕</span> 生词
+    </button>
+    <button class="type-btn phrase" data-type="phrase">
+      <span class="icon">📘</span> 短语
+    </button>
+    <button class="type-btn sentence" data-type="sentence">
+      <span class="icon">📗</span> 难句
+    </button>
+  </div>
+  <button class="sheet-cancel" id="btn-selection-cancel">取消</button>
+</div>
+
+<!-- Annotation detail panel -->
+<div class="overlay-bg" id="ann-overlay"></div>
+<div class="bottom-sheet" id="ann-panel">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title">标注详情</div>
+  <div class="ann-detail-row">
+    <span class="tag" id="ann-tag"></span>
+    <span id="ann-text" style="font-family: var(--font-serif);"></span>
+  </div>
+  <div class="sheet-subtitle" id="ann-context"></div>
+  <div class="action-buttons">
+    <button id="btn-ann-delete" class="danger">删除标注</button>
+  </div>
+  <button class="sheet-cancel" id="btn-ann-close" style="margin-top:8px;">关闭</button>
+</div>
+
+<!-- Annotation list panel -->
+<div class="overlay-bg" id="list-overlay"></div>
+<div class="bottom-sheet" id="list-panel">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title" id="list-title">标注列表</div>
+  <div id="list-content"></div>
+  <button class="sheet-cancel" id="btn-list-close" style="margin-top:12px;">关闭</button>
+</div>
+
+<!-- Export modal -->
+<div class="modal" id="export-modal">
+  <div class="modal-bg" id="export-modal-bg"></div>
+  <div class="modal-content">
+    <div class="modal-title">导出标注数据</div>
+    <div class="export-option" data-format="json">
+      <span class="eo-icon">📋</span>
+      <div class="eo-info">
+        <div class="eo-name">JSON 格式</div>
+        <div class="eo-desc">结构化数据，可粘贴给 AI 工具分析</div>
+      </div>
+    </div>
+    <div class="export-option" data-format="markdown">
+      <span class="eo-icon">📝</span>
+      <div class="eo-info">
+        <div class="eo-name">Markdown 格式</div>
+        <div class="eo-desc">可读笔记，方便复习查看</div>
+      </div>
+    </div>
+    <button class="modal-close" id="btn-modal-close">取消</button>
+  </div>
+</div>
+
+<!-- Hidden file input for import -->
+<input type="file" id="import-input" accept=".json">
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+/* ================================================================
+   考研英语一 · 精读标注工具 — JavaScript
+   ================================================================ */
+
+// ==========================================================
+// Article Data
+// ==========================================================
+const ARTICLES = [
+  {
+    id: '2005-text1',
+    year: 2005,
+    title: 'Text 1 — Fairness in Capuchin Monkeys',
+    source: 'The Economist',
+    paragraphs: [
+      'Everybody loves a fat pay rise. Yet pleasure at your own can vanish if you learn that a colleague has been given a bigger one. Indeed, if he has a reputation for slacking, you might even be outraged. Such behaviour is regarded as "all too human", with the underlying assumption that other animals would not be capable of this finely developed sense of grievance. But a study by Sarah Brosnan and Frans de Waal of Emory University in Atlanta, Georgia, which has just been published in Nature, suggests that it is all too monkey, as well.',
+      'The researchers studied the behaviour of female brown capuchin monkeys. They look cute. They are good-natured, co-operative creatures, and they share their food readily. Above all, like their female human counterparts, they tend to pay much closer attention to the value of "goods and services" than males.',
+      'Such characteristics make them perfect candidates for Dr. Brosnan\'s and Dr. de Waal\'s study. The researchers spent two years teaching their monkeys to exchange tokens for food. Normally, the monkeys were happy enough to exchange pieces of rock for slices of cucumber. However, when two monkeys were placed in separate but adjoining chambers, so that each could observe what the other was getting in return for its rock, their behaviour became markedly different.',
+      'In the world of capuchins grapes are luxury goods (and much preferable to cucumbers). So when one monkey was handed a grape in exchange for her token, the second was reluctant to hand hers over for a mere piece of cucumber. And if one received a grape without having to provide her token in exchange at all, the other either tossed her own token at the researcher or out of the chamber, or refused to accept the slice of cucumber. Indeed, the mere presence of a grape in the other chamber (without an actual monkey to eat it) was enough to induce resentment in a female capuchin.',
+      'The researchers suggest that capuchin monkeys, like humans, are guided by social emotions. In the wild, they are a co-operative, group-living species. Such co-operation is likely to be stable only when each animal feels it is not being cheated. Feelings of righteous indignation, it seems, are not the preserve of people alone. Refusing a lesser reward completely makes these feelings abundantly clear to other members of the group. However, whether such a sense of fairness evolved independently in capuchins and humans, or whether it stems from the common ancestor that the species had 35 million years ago, is, as yet, an unanswered question.'
+    ]
+  },
+  {
+    id: '2005-text2',
+    year: 2005,
+    title: 'Text 2 — Global Warming and the Paralysis by Analysis',
+    source: 'The Economist',
+    paragraphs: [
+      'Do you remember all those years when scientists argued that smoking would kill us but the doubters insisted that we didn\'t know for sure? That the evidence was inconclusive, the science uncertain? That the antismoking lobby was out to destroy our way of life and the government should stay out of the way? Lots of Americans bought that nonsense, and over three decades, some 10 million smokers went to early graves.',
+      'There are upsetting parallels today, as scientists in one wave after another try to awaken us to the growing threat of global warming. The latest was a panel from the National Academy of Sciences, enlisted by the White House, to tell us that the Earth\'s atmosphere is definitely warming and that the problem is largely man-made. The clear message is that we should get moving to protect ourselves. The president of the National Academy, Bruce Alberts, added this key point in the preface to the panel\'s report: "Science never has all the answers. But science does provide us with the best available guide to the future, and it is critical that our nation and the world base important policies on the best judgments that science can provide concerning the future consequences of present actions."',
+      'Just as on smoking, voices now come from many quarters insisting that the science about global warming is incomplete, that it\'s OK to keep pouring fumes into the air until we know for sure. This is a dangerous game: by the time 100 percent of the evidence is in, it may be too late. With the risks obvious and growing, a prudent people would take out an insurance policy now.',
+      'Fortunately, the White House is starting to pay attention. But it\'s obvious that a majority of the president\'s advisers still don\'t take global warming seriously. Instead of a plan of action, they continue to press for more research — a classic case of "paralysis by analysis".',
+      'To serve as responsible stewards of the planet, we must press forward on deeper atmospheric and oceanic research. But research alone is inadequate. If the Administration won\'t take the legislative initiative, Congress should help to begin fashioning conservation measures. A bill by Democratic Senator Robert Byrd of West Virginia, which would offer financial incentives for private industry, is a promising start. Many see that the country is getting ready to build lots of new power plants to meet our energy needs. If we are ever going to protect the atmosphere, it is crucial that those new plants be environmentally sound.'
+    ]
+  },
+  {
+    id: '2005-text3',
+    year: 2005,
+    title: 'Text 3 — The Science of Dreams',
+    source: 'Newsweek',
+    paragraphs: [
+      'Of all the components of a good night\'s sleep, dreams seem to be least within our control. In dreams, a window opens into a world where logic is suspended and dead people speak. A century ago, Freud formulated his revolutionary theory that dreams were the disguised shadows of our unconscious desires and fears; by the late 1970s, neurologists had switched to thinking of them as just "mental noise" — the random byproducts of the neural-repair work that goes on during sleep. Now researchers suspect that dreams are part of the mind\'s emotional thermostat, regulating moods while the brain is "off-line." And one leading authority says that these intensely powerful mental events can be not only harnessed but actually brought under conscious control, to help us sleep and feel better. "It\'s your dream," says Rosalind Cartwright, chair of psychology at Chicago\'s Medical Center. "If you don\'t like it, change it."',
+      'Evidence from brain imaging supports this view. The brain is as active during REM (rapid eye movement) sleep — when most vivid dreams occur — as it is when fully awake, says Dr. Eric Nofzinger at the University of Pittsburgh. But not all parts of the brain are equally involved; the limbic system (the "emotional brain") is especially active, while the prefrontal cortex (the center of intellect and reasoning) is relatively quiet. "We wake up from dreams happy or depressed, and those feelings can stay with us all day," says Stanford sleep researcher Dr. William Dement.',
+      'The link between dreams and emotions shows up among the patients in Cartwright\'s clinic. Most people seem to have more bad dreams early in the night, progressing toward happier ones before awakening, suggesting that they are working through negative feelings generated during the day. Because our conscious mind is occupied with daily life we don\'t always think about the emotional significance of the day\'s events — until, it appears, we begin to dream.',
+      'And this process need not be left to the unconscious. Cartwright believes one can exercise conscious control over recurring bad dreams. As soon as you awaken, identify what is upsetting about the dream. Visualize how you would like it to end instead; the next time it occurs, try to wake up just enough to control its course. With much practice people can learn to, literally, do it in their sleep.',
+      'At the end of the day, there\'s probably little reason to pay attention to our dreams at all unless they keep us from sleeping or "we wake up in a panic," Cartwright says. Terrorism, economic uncertainties and general feelings of insecurity have increased people\'s anxiety. Those suffering from persistent nightmares should seek help from a therapist. For the rest of us, the brain has its ways of working through bad feelings. Sleep — or rather dream — on it and you\'ll feel better in the morning.'
+    ]
+  }
+];
+
+// ==========================================================
+// Utility Functions
+// ==========================================================
+function generateId() {
+  return 'ann_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toast._timeout);
+  toast._timeout = setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+// ==========================================================
+// Article Store
+// ==========================================================
+const ArticleStore = {
+  articles: ARTICLES,
+  currentId: null,
+
+  init() {
+    this.currentId = localStorage.getItem('engreader_current_article') || ARTICLES[0].id;
+  },
+
+  getCurrent() {
+    return this.articles.find(a => a.id === this.currentId) || this.articles[0];
+  },
+
+  setCurrent(id) {
+    this.currentId = id;
+    localStorage.setItem('engreader_current_article', id);
+  },
+
+  getAll() {
+    return this.articles;
+  }
+};
+
+// ==========================================================
+// Annotation Store (CRUD + localStorage + indexing)
+// ==========================================================
+const AnnotationStore = {
+  annotations: {},   // { articleId: [annotation, ...] }
+  // Index: wordIndex -> annotationId
+  index: {},         // { articleId: { wordIndex: annotationId } }
+
+  init() {
+    const saved = localStorage.getItem('engreader_annotations');
+    if (saved) {
+      try { this.annotations = JSON.parse(saved); } catch(e) { this.annotations = {}; }
+    }
+    this._rebuildIndex();
+  },
+
+  _key() {
+    return ArticleStore.currentId;
+  },
+
+  _rebuildIndex() {
+    this.index = {};
+    for (const [articleId, anns] of Object.entries(this.annotations)) {
+      this.index[articleId] = {};
+      for (const ann of anns) {
+        for (let i = ann.range.startWordIndex; i <= ann.range.endWordIndex; i++) {
+          this.index[articleId][i] = ann.id;
+        }
+      }
+    }
+  },
+
+  _save() {
+    localStorage.setItem('engreader_annotations', JSON.stringify(this.annotations));
+    this._rebuildIndex();
+  },
+
+  getForCurrent() {
+    return this.annotations[this._key()] || [];
+  },
+
+  getById(annId) {
+    return this.getForCurrent().find(a => a.id === annId);
+  },
+
+  add(type, text, context, range) {
+    const ann = {
+      id: generateId(),
+      type, text, context, range,
+      timestamp: Date.now(),
+      note: ''
+    };
+    const key = this._key();
+    if (!this.annotations[key]) this.annotations[key] = [];
+    this.annotations[key].push(ann);
+    this._save();
+    return ann;
+  },
+
+  remove(annId) {
+    const key = this._key();
+    if (!this.annotations[key]) return false;
+    this.annotations[key] = this.annotations[key].filter(a => a.id !== annId);
+    this._save();
+    return true;
+  },
+
+  getByWordIndex(wordIndex) {
+    const idx = this.index[this._key()];
+    if (!idx) return null;
+    const annId = idx[wordIndex];
+    if (!annId) return null;
+    return this.getById(annId);
+  },
+
+  getStats() {
+    const anns = this.getForCurrent();
+    return {
+      word: anns.filter(a => a.type === 'word').length,
+      phrase: anns.filter(a => a.type === 'phrase').length,
+      sentence: anns.filter(a => a.type === 'sentence').length
+    };
+  },
+
+  getLast() {
+    const anns = this.getForCurrent();
+    return anns.length > 0 ? anns[anns.length - 1] : null;
+  },
+
+  getAnnotationsForExport() {
+    const anns = this.getForCurrent();
+    return {
+      words: anns.filter(a => a.type === 'word').map(a => ({
+        text: a.text,
+        sentence: a.context.sentence,
+        paragraphIndex: a.context.paragraphIndex,
+        note: a.note
+      })),
+      phrases: anns.filter(a => a.type === 'phrase').map(a => ({
+        text: a.text,
+        sentence: a.context.sentence,
+        paragraphIndex: a.context.paragraphIndex,
+        note: a.note
+      })),
+      sentences: anns.filter(a => a.type === 'sentence').map(a => ({
+        text: a.text,
+        paragraphIndex: a.context.paragraphIndex,
+        note: a.note
+      }))
+    };
+  },
+
+  importAnnotations(importedAnns, articleId) {
+    // Merge: add imported annotations that don't have ID conflicts
+    const key = articleId;
+    if (!this.annotations[key]) this.annotations[key] = [];
+    const existingIds = new Set(this.annotations[key].map(a => a.id));
+    const newAnns = importedAnns.filter(a => !existingIds.has(a.id));
+    this.annotations[key] = [...this.annotations[key], ...newAnns];
+    this._save();
+    return newAnns.length;
+  }
+};
+
+// ==========================================================
+// Article Renderer (tokenize + render)
+// ==========================================================
+const ArticleRenderer = {
+  // Parsed token structure: [{ text, wordIndex, sentenceIndex, paragraphIndex }]
+  tokens: [],
+
+  tokenize(article) {
+    this.tokens = [];
+    let wordIdx = 0;
+    for (let pi = 0; pi < article.paragraphs.length; pi++) {
+      const paragraph = article.paragraphs[pi];
+      // Split paragraph into sentences
+      const sentences = paragraph.match(/[^.!?]+[.!?]+[\s]*/g) || [paragraph];
+      let si = 0;
+      let lastEnd = 0;
+
+      // Rebuild sentence tracking within paragraph
+      const sentenceRanges = [];
+      let pos = 0;
+      // Use a simple sentence split
+      const parts = paragraph.split(/(?<=[.!?])\s+/);
+      let runningPos = 0;
+      for (const part of parts) {
+        sentenceRanges.push({ start: runningPos, end: runningPos + part.length, text: part.trim() });
+        runningPos += part.length + 1; // +1 for the space
+      }
+
+      // Tokenize the whole paragraph
+      // Split by whitespace but keep punctuation attached
+      const words = paragraph.match(/[^\s]+/g) || [];
+      let sentenceIndex = 0;
+      let charPos = 0;
+
+      for (const word of words) {
+        const wordStart = paragraph.indexOf(word, charPos);
+        charPos = wordStart + word.length;
+
+        // Determine which sentence this word belongs to
+        while (sentenceIndex < sentenceRanges.length - 1 && wordStart >= sentenceRanges[sentenceIndex].end) {
+          sentenceIndex++;
+        }
+        if (sentenceIndex >= sentenceRanges.length) sentenceIndex = sentenceRanges.length - 1;
+
+        this.tokens.push({
+          text: word,
+          wordIndex: wordIdx,
+          sentenceIndex: sentenceIndex,
+          paragraphIndex: pi
+        });
+        wordIdx++;
+      }
+    }
+    return this.tokens;
+  },
+
+  getTokenByWordIndex(idx) {
+    return this.tokens.find(t => t.wordIndex === idx) || null;
+  },
+
+  render(article) {
+    this.tokenize(article);
+    const container = document.getElementById('article-content');
+    container.innerHTML = '';
+
+    let currentParagraph = -1;
+    let pEl = null;
+    const anns = AnnotationStore.getForCurrent();
+
+    // Build wordIndex -> annotation map for quick lookup
+    const annMap = {};
+    const annSentenceStarts = new Set();
+    const annSentenceEnds = new Set();
+    for (const ann of anns) {
+      for (let i = ann.range.startWordIndex; i <= ann.range.endWordIndex; i++) {
+        annMap[i] = ann;
+      }
+      if (ann.type === 'sentence') {
+        annSentenceStarts.add(ann.range.startWordIndex);
+        annSentenceEnds.add(ann.range.endWordIndex);
+      }
+    }
+
+    for (const token of this.tokens) {
+      // New paragraph
+      if (token.paragraphIndex !== currentParagraph) {
+        currentParagraph = token.paragraphIndex;
+        pEl = document.createElement('p');
+        pEl.setAttribute('data-paragraph', currentParagraph);
+        container.appendChild(pEl);
+      }
+
+      const span = document.createElement('span');
+      span.className = 'word';
+      span.setAttribute('data-word-index', token.wordIndex);
+      span.setAttribute('data-sentence-index', token.sentenceIndex);
+      span.setAttribute('data-paragraph-index', token.paragraphIndex);
+      span.textContent = token.text;
+
+      // Apply existing annotation styles
+      const ann = annMap[token.wordIndex];
+      if (ann) {
+        span.classList.add('ann-' + ann.type);
+        if (ann.type === 'sentence') {
+          if (annSentenceStarts.has(token.wordIndex)) span.classList.add('ann-sentence-first');
+          if (annSentenceEnds.has(token.wordIndex)) span.classList.add('ann-sentence-last');
+        }
+        span.setAttribute('data-annotation-id', ann.id);
+      }
+
+      pEl.appendChild(span);
+
+      // Add space after each word (except before punctuation)
+      if (token.text.match(/^[.,;:!?)\]}'"”’—]/)) {
+        // Punctuation — no preceding space needed, already attached
+      }
+    }
+
+    // Post-process: add proper spacing
+    this._fixSpacing(container);
+  },
+
+  _fixSpacing(container) {
+    // Actually, with inline display, spaces need to be between words.
+    // Let's use a different approach: insert space text nodes between word spans.
+    const paragraphs = container.querySelectorAll('p');
+    for (const p of paragraphs) {
+      const spans = Array.from(p.querySelectorAll('.word'));
+      // Remove all existing text nodes
+      for (const child of Array.from(p.childNodes)) {
+        if (child.nodeType === Node.TEXT_NODE) {
+          p.removeChild(child);
+        }
+      }
+      // Rebuild with spaces
+      p.innerHTML = '';
+      for (let i = 0; i < spans.length; i++) {
+        p.appendChild(spans[i]);
+        if (i < spans.length - 1) {
+          const nextText = spans[i + 1].textContent;
+          // Add space unless next token is punctuation
+          if (nextText && !nextText.match(/^[.,;:!?)\]}'"”’—]/)) {
+            p.appendChild(document.createTextNode(' '));
+          }
+        }
+      }
+    }
+  }
+};
+
+// ==========================================================
+// Touch / Mouse Handler
+// ==========================================================
+const TouchHandler = {
+  startWordIndex: -1,
+  endWordIndex: -1,
+  currentWordIndex: -1,
+  isDragging: false,
+  startX: 0,
+  startY: 0,
+  startTime: 0,
+  active: true,
+  selectionActive: false,
+  _justSelected: false,      // Flag to prevent click after selection
+  _lastTapWordIndex: -1,     // For double-tap detection
+  _lastTapTime: 0,           // For double-tap detection
+  _singleTapTimer: null,     // Delayed tap timer
+  _isTouchDevice: false,     // Detected on first touch
+
+  init() {
+    const content = document.getElementById('article-content');
+    content.addEventListener('touchstart', this._onTouchStart.bind(this), { passive: false });
+    content.addEventListener('touchmove', this._onTouchMove.bind(this), { passive: false });
+    content.addEventListener('touchend', this._onTouchEnd.bind(this));
+    content.addEventListener('touchcancel', this._onTouchEnd.bind(this));
+    // Mouse events for desktop
+    content.addEventListener('mousedown', this._onMouseDown.bind(this));
+    content.addEventListener('mousemove', this._onMouseMove.bind(this));
+    content.addEventListener('mouseup', this._onMouseUp.bind(this));
+    // Click for desktop double-click detection and annotation detail
+    content.addEventListener('click', this._onClick.bind(this));
+  },
+
+  setActive(val) { this.active = val; },
+
+  _getWordAtPoint(x, y) {
+    const el = document.elementFromPoint(x, y);
+    if (el && el.classList.contains('word')) {
+      return parseInt(el.getAttribute('data-word-index'));
+    }
+    return -1;
+  },
+
+  _clearSelection() {
+    const prev = document.querySelectorAll('#article-content .word.selected, #article-content .word.selection-start, #article-content .word.selection-end');
+    prev.forEach(el => {
+      el.classList.remove('selected', 'selection-start', 'selection-end');
+    });
+    this.selectionActive = false;
+    this.startWordIndex = -1;
+    this.endWordIndex = -1;
+  },
+
+  _highlightRange(start, end) {
+    const [s, e] = start <= end ? [start, end] : [end, start];
+    const container = document.getElementById('article-content');
+    const allWords = container.querySelectorAll('.word');
+    allWords.forEach(el => {
+      const idx = parseInt(el.getAttribute('data-word-index'));
+      el.classList.remove('selected', 'selection-start', 'selection-end');
+      if (idx >= s && idx <= e) {
+        el.classList.add('selected');
+      }
+    });
+    // Mark start and end
+    const startEl = container.querySelector(`.word[data-word-index="${s}"]`);
+    const endEl = container.querySelector(`.word[data-word-index="${e}"]`);
+    if (startEl) { startEl.classList.remove('selected'); startEl.classList.add('selection-start'); }
+    if (endEl && endEl !== startEl) { endEl.classList.remove('selected'); endEl.classList.add('selection-end'); }
+    this.selectionActive = true;
+    this.startWordIndex = s;
+    this.endWordIndex = e;
+  },
+
+  // Shared: annotate a range and clean up
+  _annotateAndCleanup(type, rangeStart, rangeEnd) {
+    const [s, e] = rangeStart <= rangeEnd ? [rangeStart, rangeEnd] : [rangeEnd, rangeStart];
+
+    // Check for duplicate — reject if any word already annotated
+    for (let i = s; i <= e; i++) {
+      if (AnnotationStore.getByWordIndex(i)) {
+        showToast('该内容已有标注');
+        this._clearSelection();
+        return;
+      }
+    }
+
+    const range = { start: s, end: e };
+    const ann = AnnotationStore.add(
+      type,
+      SelectionManager.getSelectedText(range),
+      SelectionManager.getSelectedContext(range),
+      { startWordIndex: s, endWordIndex: e }
+    );
+    this._clearSelection();
+    UIController.refreshAll();
+    const typeNames = { word: '生词', phrase: '短语', sentence: '难句' };
+    showToast(`已标记${typeNames[type]}：${ann.text.slice(0, 20)}${ann.text.length > 20 ? '...' : ''}`);
+  },
+
+  // ===== Touch Events =====
+
+  _onTouchStart(e) {
+    if (!this.active) return;
+    if (e.touches.length !== 1) return;
+    this._isTouchDevice = true;
+    const touch = e.touches[0];
+    this.startX = touch.clientX;
+    this.startY = touch.clientY;
+    this.startTime = Date.now();
+    this.isDragging = false;
+    this.startWordIndex = this._getWordAtPoint(touch.clientX, touch.clientY);
+    this.currentWordIndex = this.startWordIndex;
+
+    if (this.startWordIndex >= 0) {
+      this._highlightRange(this.startWordIndex, this.startWordIndex);
+    }
+  },
+
+  _onTouchMove(e) {
+    if (!this.active || this.startWordIndex < 0) return;
+    if (e.touches.length !== 1) return;
+    const touch = e.touches[0];
+    const dx = Math.abs(touch.clientX - this.startX);
+    const dy = Math.abs(touch.clientY - this.startY);
+    const totalMove = Math.sqrt(dx * dx + dy * dy);
+
+    if (totalMove > 10) {
+      if (dy > dx * 1.8) {
+        // Primarily vertical swipe → user is scrolling, cancel selection
+        this._clearSelection();
+        this.isDragging = false;
+        return;
+      }
+      // Enter selection mode
+      this.isDragging = true;
+      e.preventDefault();
+    }
+
+    if (this.isDragging) {
+      const wordIdx = this._getWordAtPoint(touch.clientX, touch.clientY);
+      if (wordIdx >= 0 && wordIdx !== this.currentWordIndex) {
+        this.currentWordIndex = wordIdx;
+        this._highlightRange(this.startWordIndex, wordIdx);
+      }
+    }
+  },
+
+  _onTouchEnd(e) {
+    if (!this.active) return;
+
+    if (this.isDragging && this.selectionActive) {
+      // Drag → annotate as PHRASE
+      const endIdx = this.currentWordIndex >= 0 ? this.currentWordIndex : this.startWordIndex;
+      this._annotateAndCleanup('phrase', this.startWordIndex, endIdx);
+      this._justSelected = true;
+      setTimeout(() => { this._justSelected = false; }, 500);
+      return;
+    }
+
+    if (!this.isDragging && this.selectionActive && this.startWordIndex >= 0) {
+      // Tap → check for double-tap
+      const wordIdx = this.startWordIndex;
+      const now = Date.now();
+
+      // Block click event from showing annotation panel
+      this._justSelected = true;
+
+      if (this._lastTapWordIndex === wordIdx && (now - this._lastTapTime) < 420) {
+        // Double tap detected → annotate as SENTENCE (whole sentence)
+        clearTimeout(this._singleTapTimer);
+        this._singleTapTimer = null;
+        this._lastTapWordIndex = -1;
+
+        const sentenceRange = SelectionManager.getSentenceRange(wordIdx);
+        if (sentenceRange) {
+          this._highlightRange(sentenceRange.start, sentenceRange.end);
+          this._annotateAndCleanup('sentence', sentenceRange.start, sentenceRange.end);
+        }
+        setTimeout(() => { this._justSelected = false; }, 500);
+      } else {
+        // First tap → delay to check if double-tap follows
+        this._lastTapWordIndex = wordIdx;
+        this._lastTapTime = now;
+        clearTimeout(this._singleTapTimer);
+
+        this._singleTapTimer = setTimeout(() => {
+          // No second tap → annotate as WORD
+          this._annotateAndCleanup('word', wordIdx, wordIdx);
+          this._lastTapWordIndex = -1;
+          this._singleTapTimer = null;
+          setTimeout(() => { this._justSelected = false; }, 200);
+        }, 420);
+      }
+    }
+  },
+
+  // ===== Mouse Events =====
+
+  _onMouseDown(e) {
+    if (!this.active) return;
+    // Skip mouse handling on touch devices
+    if (this._isTouchDevice) return;
+    this.startX = e.clientX;
+    this.startY = e.clientY;
+    this.startTime = Date.now();
+    this.isDragging = false;
+    this.startWordIndex = this._getWordAtPoint(e.clientX, e.clientY);
+    this.currentWordIndex = this.startWordIndex;
+    if (this.startWordIndex >= 0) {
+      this._highlightRange(this.startWordIndex, this.startWordIndex);
+    }
+  },
+
+  _onMouseMove(e) {
+    if (!this.active || this.startWordIndex < 0) return;
+    if (e.buttons !== 1) return;
+    const dx = Math.abs(e.clientX - this.startX);
+    const dy = Math.abs(e.clientY - this.startY);
+    if (dx > 5 || dy > 5) this.isDragging = true;
+    if (this.isDragging) {
+      const wordIdx = this._getWordAtPoint(e.clientX, e.clientY);
+      if (wordIdx >= 0 && wordIdx !== this.currentWordIndex) {
+        this.currentWordIndex = wordIdx;
+        this._highlightRange(this.startWordIndex, wordIdx);
+      }
+    }
+  },
+
+  _onMouseUp(e) {
+    if (!this.active || this._isTouchDevice) return;
+
+    if (this.isDragging && this.selectionActive) {
+      // Drag → annotate as PHRASE
+      const endIdx = this.currentWordIndex >= 0 ? this.currentWordIndex : this.startWordIndex;
+      this._annotateAndCleanup('phrase', this.startWordIndex, endIdx);
+      this._justSelected = true;
+      setTimeout(() => { this._justSelected = false; }, 500);
+    }
+    // For click (non-drag), defer to _onClick which has click count info
+  },
+
+  _onClick(e) {
+    // On touch devices, _justSelected blocks annotation detail after selection
+    if (this._justSelected) return;
+
+    // Desktop: single click (detail=1) → word, double click (detail=2) → sentence
+    if (!this._isTouchDevice && !this.isDragging) {
+      const wordEl = e.target.closest('.word');
+      if (!wordEl) return;
+      const wordIdx = parseInt(wordEl.getAttribute('data-word-index'));
+      if (isNaN(wordIdx)) return;
+
+      if (e.detail === 2) {
+        // Double click → annotate as SENTENCE (whole sentence)
+        e.preventDefault();
+        const sentenceRange = SelectionManager.getSentenceRange(wordIdx);
+        if (sentenceRange) {
+          this._highlightRange(sentenceRange.start, sentenceRange.end);
+          this._annotateAndCleanup('sentence', sentenceRange.start, sentenceRange.end);
+        }
+        this._justSelected = true;
+        setTimeout(() => { this._justSelected = false; }, 500);
+        return;
+      }
+
+      if (e.detail === 1) {
+        // Single click → check if clicking an annotation to view detail
+        const annId = wordEl.getAttribute('data-annotation-id');
+        if (annId) {
+          e.preventDefault();
+          e.stopPropagation();
+          UIController.showAnnotationPanel(annId);
+          return;
+        }
+        // Otherwise → annotate as WORD
+        e.preventDefault();
+        this._annotateAndCleanup('word', wordIdx, wordIdx);
+        this._justSelected = true;
+        setTimeout(() => { this._justSelected = false; }, 500);
+        return;
+      }
+      return;
+    }
+
+    // Touch device: check if clicking an annotation to view detail
+    const wordEl = e.target.closest('.word');
+    if (!wordEl) return;
+    const annId = wordEl.getAttribute('data-annotation-id');
+    if (annId) {
+      e.preventDefault();
+      e.stopPropagation();
+      UIController.showAnnotationPanel(annId);
+    }
+  }
+};
+
+// ==========================================================
+// Selection Manager
+// ==========================================================
+const SelectionManager = {
+  clearSelection() {
+    TouchHandler._clearSelection();
+  },
+
+  getSelectedRange() {
+    return {
+      start: Math.min(TouchHandler.startWordIndex, TouchHandler.endWordIndex),
+      end: Math.max(TouchHandler.startWordIndex, TouchHandler.endWordIndex)
+    };
+  },
+
+  getSelectedText(range) {
+    const tokens = ArticleRenderer.tokens;
+    const words = [];
+    for (let i = range.start; i <= range.end; i++) {
+      const t = tokens.find(tk => tk.wordIndex === i);
+      if (t) words.push(t.text);
+    }
+    return words.join(' ');
+  },
+
+  getSelectedContext(range) {
+    const tokens = ArticleRenderer.tokens;
+    const startToken = tokens.find(t => t.wordIndex === range.start);
+    if (!startToken) return { sentence: '', sentenceIndex: 0, paragraphIndex: 0 };
+    // Get the full sentence
+    const sentenceTokens = tokens.filter(t =>
+      t.paragraphIndex === startToken.paragraphIndex &&
+      t.sentenceIndex === startToken.sentenceIndex
+    );
+    const sentence = sentenceTokens.map(t => t.text).join(' ');
+    return {
+      sentence,
+      sentenceIndex: startToken.sentenceIndex,
+      paragraphIndex: startToken.paragraphIndex
+    };
+  },
+
+  // Return the word index range for the entire sentence containing wordIndex
+  getSentenceRange(wordIndex) {
+    const tokens = ArticleRenderer.tokens;
+    const targetToken = tokens.find(t => t.wordIndex === wordIndex);
+    if (!targetToken) return null;
+    const sentenceTokens = tokens.filter(t =>
+      t.paragraphIndex === targetToken.paragraphIndex &&
+      t.sentenceIndex === targetToken.sentenceIndex
+    );
+    if (sentenceTokens.length === 0) return null;
+    const indices = sentenceTokens.map(t => t.wordIndex);
+    return { start: Math.min(...indices), end: Math.max(...indices) };
+  }
+};
+
+// ==========================================================
+// UI Controller
+// ==========================================================
+const UIController = {
+  init() {
+    this._bindEvents();
+    this._updateStats();
+    this._updateUndoButton();
+  },
+
+  _bindEvents() {
+    // Selection panel
+    document.getElementById('selection-overlay').addEventListener('click', () => this.hideSelectionPanel());
+    document.getElementById('btn-selection-cancel').addEventListener('click', () => this.hideSelectionPanel());
+    document.querySelectorAll('#selection-panel .type-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const type = btn.getAttribute('data-type');
+        this._annotate(type);
+      });
+    });
+
+    // Annotation detail panel
+    document.getElementById('ann-overlay').addEventListener('click', () => this.hideAnnotationPanel());
+    document.getElementById('btn-ann-close').addEventListener('click', () => this.hideAnnotationPanel());
+    document.getElementById('btn-ann-delete').addEventListener('click', () => this._deleteAnnotation());
+
+    // Export modal
+    document.getElementById('btn-export').addEventListener('click', () => this.showExportModal());
+    document.getElementById('export-modal-bg').addEventListener('click', () => this.hideExportModal());
+    document.getElementById('btn-modal-close').addEventListener('click', () => this.hideExportModal());
+    document.querySelectorAll('#export-modal .export-option').forEach(opt => {
+      opt.addEventListener('click', () => {
+        const format = opt.getAttribute('data-format');
+        ExportManager.exportAnnotations(format);
+        this.hideExportModal();
+      });
+    });
+
+    // Import
+    document.getElementById('btn-import').addEventListener('click', () => {
+      document.getElementById('import-input').click();
+    });
+    document.getElementById('import-input').addEventListener('change', (e) => {
+      if (e.target.files[0]) {
+        ExportManager.importAnnotations(e.target.files[0]);
+        e.target.value = '';
+      }
+    });
+
+    // Undo
+    document.getElementById('btn-undo').addEventListener('click', () => this._undo());
+
+    // Article selector
+    const select = document.getElementById('article-select');
+    select.addEventListener('change', () => this._switchArticle(select.value));
+
+    // Status bar stat clicks — scroll to first annotation of that type
+    document.querySelectorAll('#status-bar .stat').forEach(stat => {
+      stat.addEventListener('click', () => {
+        const type = stat.getAttribute('data-type');
+        const first = document.querySelector(`#article-content .word.ann-${type}`);
+        if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+    });
+
+    // List panel
+    document.getElementById('btn-list').addEventListener('click', () => this.showListPanel());
+    document.getElementById('list-overlay').addEventListener('click', () => this.hideListPanel());
+    document.getElementById('btn-list-close').addEventListener('click', () => this.hideListPanel());
+  },
+
+  _populateArticleSelect() {
+    const select = document.getElementById('article-select');
+    select.innerHTML = '';
+    ArticleStore.getAll().forEach(a => {
+      const opt = document.createElement('option');
+      opt.value = a.id;
+      opt.textContent = `${a.year} ${a.title}`;
+      if (a.id === ArticleStore.currentId) opt.selected = true;
+      select.appendChild(opt);
+    });
+  },
+
+  _switchArticle(id) {
+    ArticleStore.setCurrent(id);
+    AnnotationStore._rebuildIndex();
+    this.refreshAll();
+  },
+
+  _annotate(type) {
+    const range = SelectionManager.getSelectedRange();
+    const text = SelectionManager.getSelectedText(range);
+    const context = SelectionManager.getSelectedContext(range);
+
+    if (!text.trim()) return;
+
+    const ann = AnnotationStore.add(type, text, context, range);
+    this.hideSelectionPanel();
+    SelectionManager.clearSelection();
+    this.refreshAll();
+    showToast(type === 'word' ? `已标记生词：${text}` : type === 'phrase' ? `已标记短语：${text}` : `已标记难句`);
+  },
+
+  _deleteAnnotation() {
+    const annId = this._currentAnnId;
+    if (!annId) return;
+    const ann = AnnotationStore.getById(annId);
+    if (!ann) return;
+    AnnotationStore.remove(annId);
+    this.hideAnnotationPanel();
+    SelectionManager.clearSelection();
+    this.refreshAll();
+    showToast('标注已删除');
+  },
+
+  _undo() {
+    const last = AnnotationStore.getLast();
+    if (!last) return;
+    AnnotationStore.remove(last.id);
+    this.refreshAll();
+    showToast('已撤销最近标注');
+  },
+
+  // ===== List Panel =====
+
+  showListPanel() {
+    const anns = AnnotationStore.getForCurrent();
+    const container = document.getElementById('list-content');
+    const title = document.getElementById('list-title');
+
+    if (anns.length === 0) {
+      title.textContent = '标注列表';
+      container.innerHTML = '<div class="list-empty">暂无标注</div>';
+    } else {
+      title.textContent = `标注列表（共 ${anns.length} 条）`;
+      const groups = [
+        { type: 'word', icon: '📕', label: '生词' },
+        { type: 'phrase', icon: '📘', label: '短语' },
+        { type: 'sentence', icon: '📗', label: '难句' }
+      ];
+
+      let html = '';
+      for (const g of groups) {
+        const items = anns.filter(a => a.type === g.type);
+        if (items.length === 0) continue;
+        html += `<div class="list-group">`;
+        html += `<div class="list-group-header">${g.icon} ${g.label}（${items.length}）</div>`;
+        for (const ann of items) {
+          const ctxSnippet = (ann.context.sentence || ann.text).slice(0, 40);
+          html += `
+            <div class="list-item" data-ann-id="${ann.id}">
+              <span class="li-icon">${g.icon}</span>
+              <div class="li-info">
+                <span class="li-text">${escapeHtml(ann.text)}</span>
+                <span class="li-context">${escapeHtml(ctxSnippet)}${ctxSnippet.length >= 40 ? '...' : ''}</span>
+              </div>
+              <button class="li-delete" data-action="delete">删除</button>
+            </div>`;
+        }
+        html += `</div>`;
+      }
+      container.innerHTML = html;
+
+      // Delegate click: item click → locate, delete button → delete
+      container.onclick = (e) => {
+        const deleteBtn = e.target.closest('.li-delete');
+        const item = e.target.closest('.list-item');
+        if (!item) return;
+        const annId = item.getAttribute('data-ann-id');
+        if (deleteBtn) {
+          e.stopPropagation();
+          this._deleteFromList(annId);
+        } else {
+          this._locateAnnotation(annId);
+        }
+      };
+    }
+
+    document.getElementById('list-overlay').classList.add('show');
+    document.getElementById('list-panel').classList.add('show');
+    TouchHandler.setActive(false);
+  },
+
+  hideListPanel() {
+    document.getElementById('list-overlay').classList.remove('show');
+    document.getElementById('list-panel').classList.remove('show');
+    TouchHandler.setActive(true);
+  },
+
+  _locateAnnotation(annId) {
+    this.hideListPanel();
+    // Find the DOM element for this annotation
+    const el = document.querySelector(`#article-content .word[data-annotation-id="${annId}"]`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    // Blink highlight
+    el.classList.add('blink-locate');
+    setTimeout(() => el.classList.remove('blink-locate'), 1600);
+  },
+
+  _deleteFromList(annId) {
+    AnnotationStore.remove(annId);
+    this.refreshAll();
+    // Re-render the list panel
+    this.showListPanel();
+    showToast('标注已删除');
+  },
+
+  _currentSelectionRange: null,
+  _currentAnnId: null,
+
+  showSelectionPanel(startWordIndex, endWordIndex) {
+    const [s, e] = startWordIndex <= endWordIndex ? [startWordIndex, endWordIndex] : [endWordIndex, startWordIndex];
+    const range = { start: s, end: e };
+    this._currentSelectionRange = range;
+    const text = SelectionManager.getSelectedText(range);
+
+    document.getElementById('selection-text').textContent = text;
+    document.getElementById('selection-overlay').classList.add('show');
+    document.getElementById('selection-panel').classList.add('show');
+    TouchHandler.setActive(false);
+  },
+
+  hideSelectionPanel() {
+    document.getElementById('selection-overlay').classList.remove('show');
+    document.getElementById('selection-panel').classList.remove('show');
+    this._currentSelectionRange = null;
+    SelectionManager.clearSelection();
+    TouchHandler.setActive(true);
+  },
+
+  showAnnotationPanel(annId) {
+    const ann = AnnotationStore.getById(annId);
+    if (!ann) return;
+    this._currentAnnId = annId;
+
+    const tag = document.getElementById('ann-tag');
+    tag.textContent = ann.type === 'word' ? '生词' : ann.type === 'phrase' ? '短语' : '难句';
+    tag.className = 'tag ' + ann.type;
+
+    document.getElementById('ann-text').textContent = ann.text;
+    document.getElementById('ann-context').textContent = '原文：' + ann.context.sentence;
+
+    document.getElementById('ann-overlay').classList.add('show');
+    document.getElementById('ann-panel').classList.add('show');
+    TouchHandler.setActive(false);
+  },
+
+  hideAnnotationPanel() {
+    document.getElementById('ann-overlay').classList.remove('show');
+    document.getElementById('ann-panel').classList.remove('show');
+    this._currentAnnId = null;
+    TouchHandler.setActive(true);
+  },
+
+  showExportModal() {
+    document.getElementById('export-modal').classList.add('show');
+  },
+
+  hideExportModal() {
+    document.getElementById('export-modal').classList.remove('show');
+  },
+
+  _updateStats() {
+    const stats = AnnotationStore.getStats();
+    document.getElementById('count-word').textContent = stats.word;
+    document.getElementById('count-phrase').textContent = stats.phrase;
+    document.getElementById('count-sentence').textContent = stats.sentence;
+  },
+
+  _updateUndoButton() {
+    const btn = document.getElementById('btn-undo');
+    const last = AnnotationStore.getLast();
+    btn.disabled = !last;
+    if (last) {
+      btn.textContent = `↩ 撤销"${last.text.slice(0, 10)}${last.text.length > 10 ? '...' : ''}"`;
+    } else {
+      btn.textContent = '↩ 撤销';
+    }
+  },
+
+  refreshAll() {
+    const article = ArticleStore.getCurrent();
+    document.getElementById('article-title').textContent = article.title;
+    document.getElementById('article-meta').textContent = `${article.year} 年 · 来源：${article.source}`;
+    const main = document.getElementById('main');
+    const scrollTop = main.scrollTop;
+    ArticleRenderer.render(article);
+    main.scrollTop = scrollTop;
+    this._updateStats();
+    this._updateUndoButton();
+  }
+};
+
+// ==========================================================
+// Export / Import Manager
+// ==========================================================
+const ExportManager = {
+  exportAnnotations(format) {
+    const article = ArticleStore.getCurrent();
+    const annData = AnnotationStore.getAnnotationsForExport();
+    const total = annData.words.length + annData.phrases.length + annData.sentences.length;
+
+    if (total === 0) {
+      showToast('当前文章没有标注数据');
+      return;
+    }
+
+    let content, filename, mimeType;
+
+    if (format === 'json') {
+      const exportObj = {
+        version: '1.0',
+        exportDate: new Date().toISOString(),
+        article: {
+          id: article.id,
+          year: article.year,
+          title: article.title,
+          source: article.source,
+          paragraphs: article.paragraphs
+        },
+        annotations: annData
+      };
+      content = JSON.stringify(exportObj, null, 2);
+      filename = `engreader-${article.id}.json`;
+      mimeType = 'application/json';
+    } else {
+      // Markdown
+      let md = `# 考研英语阅读标注 — ${article.year} ${article.title}\n\n`;
+      md += `## 文章信息\n`;
+      md += `- 年份：${article.year}\n`;
+      md += `- 来源：${article.source}\n\n`;
+
+      if (annData.words.length > 0) {
+        md += `## 📕 生词 (${annData.words.length})\n\n`;
+        annData.words.forEach(w => {
+          md += `- **${w.text}**\n`;
+          md += `  > 原文：${w.sentence}\n\n`;
+        });
+      }
+      if (annData.phrases.length > 0) {
+        md += `## 📘 短语 (${annData.phrases.length})\n\n`;
+        annData.phrases.forEach(p => {
+          md += `- **${p.text}**\n`;
+          md += `  > 原文：${p.sentence}\n\n`;
+        });
+      }
+      if (annData.sentences.length > 0) {
+        md += `## 📗 难句 (${annData.sentences.length})\n\n`;
+        annData.sentences.forEach(s => {
+          md += `- ${s.text}\n\n`;
+        });
+      }
+      content = md;
+      filename = `engreader-${article.id}.md`;
+      mimeType = 'text/markdown';
+    }
+
+    const blob = new Blob([content], { type: mimeType + ';charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    showToast(`已导出：${filename}`);
+  },
+
+  importAnnotations(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = JSON.parse(e.target.result);
+        if (!data.article || !data.annotations) {
+          showToast('文件格式不正确');
+          return;
+        }
+        // Rebuild annotations with proper structure
+        const article = ArticleStore.getCurrent();
+        const importedAnns = [];
+
+        // Process words
+        if (data.annotations.words) {
+          data.annotations.words.forEach(w => {
+            importedAnns.push({
+              id: generateId(),
+              type: 'word',
+              text: w.text,
+              context: {
+                sentence: w.sentence,
+                sentenceIndex: 0,
+                paragraphIndex: w.paragraphIndex || 0
+              },
+              range: { startWordIndex: -1, endWordIndex: -1 }, // Can't restore range from export
+              timestamp: Date.now(),
+              note: w.note || ''
+            });
+          });
+        }
+        if (data.annotations.phrases) {
+          data.annotations.phrases.forEach(p => {
+            importedAnns.push({
+              id: generateId(),
+              type: 'phrase',
+              text: p.text,
+              context: {
+                sentence: p.sentence,
+                sentenceIndex: 0,
+                paragraphIndex: p.paragraphIndex || 0
+              },
+              range: { startWordIndex: -1, endWordIndex: -1 },
+              timestamp: Date.now(),
+              note: p.note || ''
+            });
+          });
+        }
+        if (data.annotations.sentences) {
+          data.annotations.sentences.forEach(s => {
+            importedAnns.push({
+              id: generateId(),
+              type: 'sentence',
+              text: s.text,
+              context: {
+                sentence: s.text,
+                sentenceIndex: 0,
+                paragraphIndex: s.paragraphIndex || 0
+              },
+              range: { startWordIndex: -1, endWordIndex: -1 },
+              timestamp: Date.now(),
+              note: s.note || ''
+            });
+          });
+        }
+
+        const count = AnnotationStore.importAnnotations(importedAnns, ArticleStore.currentId);
+        UIController.refreshAll();
+        showToast(`成功导入 ${count} 条标注`);
+      } catch (err) {
+        showToast('文件解析失败：' + err.message);
+      }
+    };
+    reader.readAsText(file);
+  }
+};
+
+// ==========================================================
+// App Initialization
+// ==========================================================
+function init() {
+  ArticleStore.init();
+  AnnotationStore.init();
+  TouchHandler.init();
+  UIController.init();
+  UIController._populateArticleSelect();
+  UIController.refreshAll();
+
+  // Prevent default double-tap zoom on the article area
+  document.getElementById('article-content').addEventListener('dblclick', (e) => {
+    e.preventDefault();
+  });
+}
+
+// Start the app
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
