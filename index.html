@@ -429,7 +429,24 @@ body {
 .bottom-sheet .action-buttons button:active { background: #f5f0e6; }
 
 /* Annotation list panel */
-#list-content { max-height: 50vh; overflow-y: auto; }
+/* Center list panel — flex layout keeps close button inside */
+#list-panel {
+  top: 50%;
+  left: 50%;
+  right: auto;
+  bottom: auto;
+  transform: translate(-50%, -50%);
+  border-radius: 16px;
+  max-width: 460px;
+  width: calc(100% - 32px);
+  max-height: 70vh;
+  overflow-y: visible;
+  animation: none;
+  display: none;
+  flex-direction: column;
+}
+#list-panel.show { display: flex; }
+#list-content { flex: 1; overflow-y: auto; min-height: 0; }
 #list-content .list-group { margin-bottom: 14px; }
 #list-content .list-group-header {
   font-family: var(--font-sans);
