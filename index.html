@@ -243,6 +243,79 @@ body {
   padding-right: 2px;
 }
 
+/* ---- Composite: two or three annotation types on same word ---- */
+/* Strategy: top 2px segmented color bar + mixed底纹 patterns. No extra padding. */
+
+/* word + phrase */
+#article-content .word.ann-word.ann-phrase {
+  background-color: color-mix(in srgb, var(--color-word-bg) 50%, var(--color-phrase-bg) 50%);
+  background-image:
+    linear-gradient(to right,
+      var(--color-word) 0%, var(--color-word) 50%,
+      var(--color-phrase) 50%, var(--color-phrase) 100%),
+    repeating-linear-gradient(-45deg, transparent, transparent 2px, rgba(255,107,107,0.06) 2px, rgba(255,107,107,0.06) 4px),
+    radial-gradient(circle, rgba(78,205,196,0.10) 1px, transparent 1px);
+  background-position: top, center, center;
+  background-size: 100% 2px, auto, 6px 6px;
+  background-repeat: no-repeat, repeat, repeat;
+  text-decoration: underline wavy var(--color-word-border) 1.5px;
+  text-underline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* word + sentence */
+#article-content .word.ann-word.ann-sentence {
+  background-color: color-mix(in srgb, var(--color-word-bg) 50%, var(--color-sentence-bg) 50%);
+  background-image:
+    linear-gradient(to right,
+      var(--color-word) 0%, var(--color-word) 50%,
+      var(--color-sentence) 50%, var(--color-sentence) 100%),
+    repeating-linear-gradient(-45deg, transparent, transparent 2px, rgba(255,107,107,0.06) 2px, rgba(255,107,107,0.06) 4px),
+    repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(255,179,71,0.06) 2px, rgba(255,179,71,0.06) 4px);
+  background-position: top, center, center;
+  background-size: 100% 2px, auto, auto;
+  background-repeat: no-repeat, repeat, repeat;
+  text-decoration: underline wavy var(--color-word-border) 1.5px;
+  text-underline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* phrase + sentence */
+#article-content .word.ann-phrase.ann-sentence {
+  background-color: color-mix(in srgb, var(--color-phrase-bg) 50%, var(--color-sentence-bg) 50%);
+  background-image:
+    linear-gradient(to right,
+      var(--color-phrase) 0%, var(--color-phrase) 50%,
+      var(--color-sentence) 50%, var(--color-sentence) 100%),
+    radial-gradient(circle, rgba(78,205,196,0.10) 1px, transparent 1px),
+    repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(255,179,71,0.06) 2px, rgba(255,179,71,0.06) 4px);
+  background-position: top, center, center;
+  background-size: 100% 2px, 6px 6px, auto;
+  background-repeat: no-repeat, repeat, repeat;
+  text-decoration: underline dashed var(--color-phrase-border) 1.5px;
+  text-underline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* word + phrase + sentence */
+#article-content .word.ann-word.ann-phrase.ann-sentence {
+  background-color: color-mix(in srgb, var(--color-word-bg) 33%, color-mix(in srgb, var(--color-phrase-bg) 50%, var(--color-sentence-bg) 50%));
+  background-image:
+    linear-gradient(to right,
+      var(--color-word) 0%, var(--color-word) 33.3%,
+      var(--color-phrase) 33.3%, var(--color-phrase) 66.6%,
+      var(--color-sentence) 66.6%, var(--color-sentence) 100%),
+    repeating-linear-gradient(-45deg, transparent, transparent 2px, rgba(255,107,107,0.05) 2px, rgba(255,107,107,0.05) 4px),
+    radial-gradient(circle, rgba(78,205,196,0.08) 1px, transparent 1px),
+    repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(255,179,71,0.05) 2px, rgba(255,179,71,0.05) 4px);
+  background-position: top, center, center, center;
+  background-size: 100% 2px, auto, 6px 6px, auto;
+  background-repeat: no-repeat, repeat, repeat, repeat;
+  text-decoration: underline wavy var(--color-word-border) 1.5px;
+  text-underline-offset: 2px;
+  border-radius: 3px;
+}
+
 /* ============================================================
    Status Bar
    ============================================================ */
@@ -876,7 +949,8 @@ const AnnotationStore = {
       this.index[articleId] = {};
       for (const ann of anns) {
         for (let i = ann.range.startWordIndex; i <= ann.range.endWordIndex; i++) {
-          this.index[articleId][i] = ann.id;
+          if (!this.index[articleId][i]) this.index[articleId][i] = [];
+          this.index[articleId][i].push(ann.id);
         }
       }
     }
@@ -919,10 +993,8 @@ const AnnotationStore = {
 
   getByWordIndex(wordIndex) {
     const idx = this.index[this._key()];
-    if (!idx) return null;
-    const annId = idx[wordIndex];
-    if (!annId) return null;
-    return this.getById(annId);
+    if (!idx || !idx[wordIndex]) return [];
+    return idx[wordIndex].map(id => this.getById(id)).filter(Boolean);
   },
 
   getStats() {
@@ -1043,13 +1115,17 @@ const ArticleRenderer = {
     let pEl = null;
     const anns = AnnotationStore.getForCurrent();
 
-    // Build wordIndex -> annotation map for quick lookup
-    const annMap = {};
+    // Build wordIndex -> types map and sentence markers
+    const annTypes = {};        // { wordIndex: Set of types }
+    const annIdsByWord = {};    // { wordIndex: [annId, ...] }
     const annSentenceStarts = new Set();
     const annSentenceEnds = new Set();
     for (const ann of anns) {
       for (let i = ann.range.startWordIndex; i <= ann.range.endWordIndex; i++) {
-        annMap[i] = ann;
+        if (!annTypes[i]) annTypes[i] = new Set();
+        annTypes[i].add(ann.type);
+        if (!annIdsByWord[i]) annIdsByWord[i] = [];
+        annIdsByWord[i].push(ann.id);
       }
       if (ann.type === 'sentence') {
         annSentenceStarts.add(ann.range.startWordIndex);
@@ -1073,15 +1149,17 @@ const ArticleRenderer = {
       span.setAttribute('data-paragraph-index', token.paragraphIndex);
       span.textContent = token.text;
 
-      // Apply existing annotation styles
-      const ann = annMap[token.wordIndex];
-      if (ann) {
-        span.classList.add('ann-' + ann.type);
-        if (ann.type === 'sentence') {
+      // Apply annotation styles — multiple types can overlay
+      const types = annTypes[token.wordIndex];
+      if (types) {
+        for (const t of types) {
+          span.classList.add('ann-' + t);
+        }
+        if (types.has('sentence')) {
           if (annSentenceStarts.has(token.wordIndex)) span.classList.add('ann-sentence-first');
           if (annSentenceEnds.has(token.wordIndex)) span.classList.add('ann-sentence-last');
         }
-        span.setAttribute('data-annotation-id', ann.id);
+        span.setAttribute('data-annotation-ids', (annIdsByWord[token.wordIndex] || []).join(','));
       }
 
       pEl.appendChild(span);
@@ -1202,10 +1280,11 @@ const TouchHandler = {
   _annotateAndCleanup(type, rangeStart, rangeEnd) {
     const [s, e] = rangeStart <= rangeEnd ? [rangeStart, rangeEnd] : [rangeEnd, rangeStart];
 
-    // Check for duplicate — reject if any word already annotated
+    // Check for duplicate — reject only if same type already covers this word
     for (let i = s; i <= e; i++) {
-      if (AnnotationStore.getByWordIndex(i)) {
-        showToast('该内容已有标注');
+      const existing = AnnotationStore.getByWordIndex(i);
+      if (existing.some(a => a.type === type)) {
+        showToast('已有同类型标注');
         this._clearSelection();
         return;
       }
@@ -1392,11 +1471,11 @@ const TouchHandler = {
 
       if (e.detail === 1) {
         // Single click → check if clicking an annotation to view detail
-        const annId = wordEl.getAttribute('data-annotation-id');
-        if (annId) {
+        const annIds = wordEl.getAttribute('data-annotation-ids');
+        if (annIds) {
           e.preventDefault();
           e.stopPropagation();
-          UIController.showAnnotationPanel(annId);
+          UIController.showAnnotationPanel(annIds.split(',')[0]);
           return;
         }
         // Otherwise → annotate as WORD
@@ -1412,11 +1491,11 @@ const TouchHandler = {
     // Touch device: check if clicking an annotation to view detail
     const wordEl = e.target.closest('.word');
     if (!wordEl) return;
-    const annId = wordEl.getAttribute('data-annotation-id');
-    if (annId) {
+    const annIds = wordEl.getAttribute('data-annotation-ids');
+    if (annIds) {
       e.preventDefault();
       e.stopPropagation();
-      UIController.showAnnotationPanel(annId);
+      UIController.showAnnotationPanel(annIds.split(',')[0]);
     }
   }
 };
@@ -1670,7 +1749,7 @@ const UIController = {
   _locateAnnotation(annId) {
     this.hideListPanel();
     // Find the DOM element for this annotation
-    const el = document.querySelector(`#article-content .word[data-annotation-id="${annId}"]`);
+    const el = document.querySelector(`#article-content .word[data-annotation-ids*="${annId}"]`);
     if (!el) return;
     el.scrollIntoView({ behavior: 'smooth', block: 'center' });
     // Blink highlight
