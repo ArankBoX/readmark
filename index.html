@@ -2171,12 +2171,20 @@ const UIController = {
   _populateArticleSelect() {
     const select = document.getElementById('article-select');
     select.innerHTML = '';
+    let currentYear = null;
+    let group = null;
     ArticleStore.getAll().forEach(a => {
+      if (a.year !== currentYear) {
+        currentYear = a.year;
+        group = document.createElement('optgroup');
+        group.label = `${currentYear} 年`;
+        select.appendChild(group);
+      }
       const opt = document.createElement('option');
       opt.value = a.id;
-      opt.textContent = `${a.year} ${a.title}`;
+      opt.textContent = a.title;
       if (a.id === ArticleStore.currentId) opt.selected = true;
-      select.appendChild(opt);
+      group.appendChild(opt);
     });
   },
 
