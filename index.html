@@ -92,6 +92,23 @@ body {
   white-space: nowrap;
   letter-spacing: -0.3px;
 }
+#year-select {
+  width: 72px;
+  flex-shrink: 0;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  padding: 6px 6px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%236b5e4a' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 4px center;
+  padding-right: 18px;
+}
 #article-select {
   flex: 1;
   font-family: var(--font-sans);
@@ -721,6 +738,7 @@ body {
   <!-- Toolbar -->
   <div id="toolbar">
     <span class="brand">📖 精读</span>
+    <select id="year-select"></select>
     <select id="article-select"></select>
     <button class="btn" id="btn-import" title="导入标注数据">导入</button>
     <button class="btn primary" id="btn-export">导出</button>
@@ -2149,9 +2167,11 @@ const UIController = {
     // Undo
     document.getElementById('btn-undo').addEventListener('click', () => this._undo());
 
-    // Article selector
-    const select = document.getElementById('article-select');
-    select.addEventListener('change', () => this._switchArticle(select.value));
+    // Two-level article selector: year → article
+    const yearSelect = document.getElementById('year-select');
+    const articleSelect = document.getElementById('article-select');
+    yearSelect.addEventListener('change', () => this._onYearChange(yearSelect.value));
+    articleSelect.addEventListener('change', () => this._switchArticle(articleSelect.value));
 
     // Status bar stat clicks — scroll to first annotation of that type
     document.querySelectorAll('#status-bar .stat').forEach(stat => {
@@ -2169,23 +2189,48 @@ const UIController = {
   },
 
   _populateArticleSelect() {
+    const yearSelect = document.getElementById('year-select');
+    const articleSelect = document.getElementById('article-select');
+    const currentId = ArticleStore.currentId;
+    const currentArticle = ArticleStore.articles.find(a => a.id === currentId);
+    const currentYear = currentArticle ? currentArticle.year : 2005;
+
+    // Populate years
+    yearSelect.innerHTML = '';
+    const years = [...new Set(ArticleStore.getAll().map(a => a.year))].sort();
+    years.forEach(y => {
+      const opt = document.createElement('option');
+      opt.value = y;
+      opt.textContent = `${y} 年`;
+      if (y === currentYear) opt.selected = true;
+      yearSelect.appendChild(opt);
+    });
+
+    // Populate articles for current year
+    this._populateArticleOptions(currentYear, currentId);
+
+    // Ensure currentId matches (in case it was from a different year)
+    ArticleStore.currentId = currentId;
+  },
+
+  _populateArticleOptions(year, selectedId) {
     const select = document.getElementById('article-select');
     select.innerHTML = '';
-    let currentYear = null;
-    let group = null;
-    ArticleStore.getAll().forEach(a => {
-      if (a.year !== currentYear) {
-        currentYear = a.year;
-        group = document.createElement('optgroup');
-        group.label = `${currentYear} 年`;
-        select.appendChild(group);
-      }
+    ArticleStore.getAll().filter(a => a.year === parseInt(year)).forEach(a => {
       const opt = document.createElement('option');
       opt.value = a.id;
       opt.textContent = a.title;
-      if (a.id === ArticleStore.currentId) opt.selected = true;
-      group.appendChild(opt);
+      if (a.id === selectedId) opt.selected = true;
+      select.appendChild(opt);
     });
+  },
+
+  _onYearChange(year) {
+    const articles = ArticleStore.getAll().filter(a => a.year === parseInt(year));
+    if (articles.length === 0) return;
+    const firstId = articles[0].id;
+    this._populateArticleOptions(year, firstId);
+    this._switchArticle(firstId);
   },
 
   _switchArticle(id) {
